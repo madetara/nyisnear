@@ -27,9 +27,9 @@ jobs:
     runs-on: ubuntu-18.04
     needs: build_and_publish_image
     env:
-      BOT_TOKEN: ${{ secrets.TG_TOKEN }}
-      BOT_URL: ${{ secrets.VK_TOKEN }}
-      BOT_PORT: ${{ secrets.BOT_TOKEN }}
+      BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+      BOT_URL: ${{ secrets.BOT_URL }}
+      BOT_PORT: ${{ secrets.BOT_PORT }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Deploy image
@@ -43,8 +43,8 @@ jobs:
             echo $GITHUB_TOKEN | docker login docker.pkg.github.com -u madetara --password-stdin
             docker stop nyisnear
             docker rm nyisnear
-            docker run -d --name nyisnear --restart unless-stopped \
+            docker run -d --name nyisnear --restart unless-stopped -p $BOT_PORT:3000 \
               --env BOT_TOKEN="$BOT_TOKEN" \
               --env BOT_URL="$BOT_URL" \
-              --env BOT_PORT="BOT_PORT" \
+              --env BOT_PORT="$BOT_PORT" \
               "docker.pkg.github.com/madetara/nyisnear/bot:1.0.$GITHUB_RUN_NUMBER"
