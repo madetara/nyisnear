@@ -1,5 +1,6 @@
 target/**/*
 **/*/.gitignore
 **/*/.dockerignore
-**/*/Dockerfile
 .github/**/*
+.dockerignore
+Dockerfile
