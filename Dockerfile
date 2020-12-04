@@ -13,7 +13,7 @@ COPY . .
 
 RUN cargo build --release --target=x86_64-unknown-linux-musl
 
-FROM scratch as run
+FROM debian:10-slim as run
 
 WORKDIR /app
 
