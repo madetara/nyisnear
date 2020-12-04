@@ -10,7 +10,7 @@ async fn main() {
     run().await;
 }
 
-const PHOTO_URL: &str = "https://images.pexels.com/photos/1741205/pexels-photo-1741205.jpeg";
+const PHOTO_URL: &str = "https://images.pexels.com/photos/416160/pexels-photo-416160.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940";
 
 async fn get_image() -> Result<bytes::Bytes, reqwest::Error> {
     Ok(reqwest::get(PHOTO_URL).await?.bytes().await?)
