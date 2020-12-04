@@ -12,6 +12,10 @@ async fn main() {
 
 const PHOTO_URL: &str = "https://images.pexels.com/photos/1741205/pexels-photo-1741205.jpeg";
 
+async fn get_image() -> Result<bytes::Bytes, reqwest::Error> {
+    Ok(reqwest::get(PHOTO_URL).await?.bytes().await?)
+}
+
 async fn run() {
     pretty_env_logger::init();
     log::info!("Starting bot...");
@@ -21,15 +25,23 @@ async fn run() {
     bot.text(|context| async move {
         log::info!("Message recieved from {}", &context.chat.id);
 
-        let call_result = context
-            .send_photo_in_reply(Photo::with_url(PHOTO_URL))
-            .call()
-            .await;
+        match get_image().await {
+            Err(err) => {
+                dbg!(err);
+                log::warn!("Failed to get image")
+            }
+            Ok(image) => {
+                let call_result = context
+                    .send_photo_in_reply(Photo::with_bytes(image.as_ref()))
+                    .call()
+                    .await;
 
-        if let Err(_) = call_result {
-            log::warn!("Error occured");
-        } else {
-            log::info!("Message sent");
+                if let Err(_) = call_result {
+                    log::warn!("Error occured");
+                } else {
+                    log::info!("Message sent");
+                }
+            }
         }
     });
 
