@@ -1,5 +1,8 @@
 extern crate pretty_env_logger;
-use std::env;
+use std::{
+    env,
+    net::{IpAddr, Ipv4Addr},
+};
 use tbot::{prelude::*, types::input_file::Photo};
 
 #[tokio::main]
@@ -37,6 +40,7 @@ async fn run() {
         .expect("BOT_PORT is not a number");
 
     bot.webhook(bot_url.as_str(), bot_port)
+        .ip(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)))
         .http()
         .start()
         .await
