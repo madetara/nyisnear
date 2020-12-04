@@ -11,7 +11,7 @@ ENV PKG_CONFIG_ALLOW_CROSS=1
 
 COPY . .
 
-RUN cargo build --release --target=x86_64-unknown-linux-musl --features vendored
+RUN cargo build --release --target=x86_64-unknown-linux-musl
 
 FROM scratch as run
 
