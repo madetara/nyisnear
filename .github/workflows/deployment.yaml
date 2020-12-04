@@ -13,9 +13,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Docker build
-        run: docker build --target run -t docker.pkg.github.com/madetara/nyisnear/bot:1.0.$GITHUB_RUN_NUMBER .
+        run: docker build -t docker.pkg.github.com/madetara/nyisnear/bot:1.0.$GITHUB_RUN_NUMBER .
       - name: Docker build latest
-        run: docker build --target run -t docker.pkg.github.com/madetara/nyisnear/bot:latest .
+        run: docker build -t docker.pkg.github.com/madetara/nyisnear/bot:latest .
       - name: Docker Login
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u madetara --password-stdin
       - name: Docker publish
