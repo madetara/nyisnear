@@ -8,7 +8,7 @@ RUN cargo build --release
 
 WORKDIR /app/target/release
 
-ARG RUST_LOG=trace
+ARG RUST_LOG=info
 ENV RUST_LOG=${RUST_LOG}
 
 CMD ["./nyisnear"]

@@ -1,3 +1,7 @@
+mod core;
+
+use crate::core::*;
+
 extern crate pretty_env_logger;
 use std::{
     env,
@@ -10,12 +14,6 @@ async fn main() {
     run().await;
 }
 
-const PHOTO_URL: &str = "https://images.pexels.com/photos/416160/pexels-photo-416160.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940";
-
-async fn get_image() -> Result<bytes::Bytes, reqwest::Error> {
-    Ok(reqwest::get(PHOTO_URL).await?.bytes().await?)
-}
-
 async fn run() {
     pretty_env_logger::init();
     log::info!("Starting bot...");
@@ -25,10 +23,13 @@ async fn run() {
     bot.text(|context| async move {
         log::info!("Message recieved from {}", &context.chat.id);
 
-        match get_image().await {
+        if !decider::should_respond(context.text.value.as_str()).await {
+            return;
+        }
+
+        match imgsource::get_image().await {
             Err(err) => {
-                dbg!(err);
-                log::warn!("Failed to get image")
+                log::error!("Failed to get image: {:?}", err);
             }
             Ok(image) => {
                 let call_result = context
@@ -36,8 +37,8 @@ async fn run() {
                     .call()
                     .await;
 
-                if let Err(_) = call_result {
-                    log::warn!("Error occured");
+                if let Err(err) = call_result {
+                    log::warn!("Failed to send message: {:?}", err);
                 } else {
                     log::info!("Message sent");
                 }
