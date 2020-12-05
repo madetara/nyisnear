@@ -17,7 +17,6 @@ async fn main() {
 }
 
 async fn run() {
-    tracing_log::LogTracer::init().expect("Failed to setup log tracer");
     tracing_subscriber::fmt::init();
 
     tracing::info!("Starting bot...");

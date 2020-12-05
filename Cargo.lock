@@ -670,7 +670,6 @@ dependencies = [
  "tokio",
  "tracing",
  "tracing-futures",
- "tracing-log",
  "tracing-subscriber",
 ]
 
