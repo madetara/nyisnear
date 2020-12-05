@@ -35,6 +35,10 @@ async fn get_photo_url() -> Result<String, BotError> {
         .captures_iter(search_result.as_str())
         .collect::<Vec<Captures>>();
 
+    if found_images.len() <= 0 {
+        return Err(BotError::ImageParseError);
+    }
+
     let mut rnd = rand::thread_rng();
     let idx = rnd.gen_range(0, found_images.len());
 
