@@ -21,7 +21,7 @@ const SEARCH_REQUEST: &str = "https://yandex.ru/images/search?text=%D1%85%D0%B0%
 async fn get_photo_url() -> Result<String, BotError> {
     lazy_static! {
         static ref IMG_REGEX: Regex =
-            Regex::new(r#""w":(\d+),"h":(\d+),"origin":{[^}]*(https?:\/\/[^"]*)[^<]*"#).unwrap();
+            Regex::new(r#""w":(\d+),"h":(\d+),"origin":\{[^\}]*(https?://[^"]*)[^<]*"#).unwrap();
     }
 
     let search_result = reqwest::get(SEARCH_REQUEST)
