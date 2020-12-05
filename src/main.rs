@@ -2,12 +2,14 @@ mod core;
 
 use crate::core::*;
 
-extern crate pretty_env_logger;
 use std::{
     env,
     net::{IpAddr, Ipv4Addr},
+    sync::Arc,
 };
-use tbot::{prelude::*, types::input_file::Photo};
+
+use tbot::{contexts::Text, prelude::*, types::input_file::Photo};
+use tracing::instrument;
 
 #[tokio::main]
 async fn main() {
@@ -15,36 +17,14 @@ async fn main() {
 }
 
 async fn run() {
-    pretty_env_logger::init();
-    log::info!("Starting bot...");
+    tracing_log::LogTracer::init().expect("Failed to setup log tracer");
+    tracing_subscriber::fmt::init();
+
+    tracing::info!("Starting bot...");
 
     let mut bot = tbot::Bot::from_env("BOT_TOKEN").event_loop();
 
-    bot.text(|context| async move {
-        log::info!("Message recieved from {}", &context.chat.id);
-
-        if !decider::should_respond(context.text.value.as_str()).await {
-            return;
-        }
-
-        match imgsource::get_image().await {
-            Err(err) => {
-                log::error!("Failed to get image: {:?}", err);
-            }
-            Ok(image) => {
-                let call_result = context
-                    .send_photo_in_reply(Photo::with_bytes(image.as_ref()))
-                    .call()
-                    .await;
-
-                if let Err(err) = call_result {
-                    log::warn!("Failed to send message: {:?}", err);
-                } else {
-                    log::info!("Message sent");
-                }
-            }
-        }
-    });
+    bot.text(|context| handle_message(context));
 
     let bot_url = env::var("BOT_URL").expect("BOT_URL not set");
     let bot_port = env::var("BOT_PORT")
@@ -58,4 +38,32 @@ async fn run() {
         .start()
         .await
         .unwrap();
+}
+
+#[instrument(skip(context), fields(chat_id = %context.chat.id))]
+async fn handle_message(context: Arc<Text>) {
+    tracing::info!("Message recieved from {}", &context.chat.id);
+
+    if !decider::should_respond(context.text.value.as_str()).await {
+        tracing::info!("Decided to not respond");
+        return;
+    }
+
+    match imgsource::get_image().await {
+        Err(err) => {
+            tracing::error!("Failed to get image: {:?}", err);
+        }
+        Ok(image) => {
+            let call_result = context
+                .send_photo_in_reply(Photo::with_bytes(image.as_ref()))
+                .call()
+                .await;
+
+            if let Err(err) = call_result {
+                tracing::warn!("Failed to send message: {:?}", err);
+            } else {
+                tracing::info!("Message sent");
+            }
+        }
+    }
 }
