@@ -38,7 +38,7 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           file: ./Dockerfile
           push: true
-          tags: ghcr.io/madetara/nyisnear/bot:1.0.$GITHUB_RUN_NUMBER
+          tags: ghcr.io/madetara/nyisnear/bot:1.0.${{ github.run_number }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
 
