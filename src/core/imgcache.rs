@@ -52,6 +52,11 @@ impl ImageCache {
 
     pub async fn get_random_image(&self) -> Result<Bytes> {
         let state = self.state.read().await;
+
+        if state.cnt == 0 {
+            return Err(anyhow!(BotError::CacheIsEmpty));
+        }
+
         let idx = rand::thread_rng().gen_range(0, state.cnt);
         let path = get_path(idx);
 
@@ -96,7 +101,7 @@ impl ImageCache {
     pub async fn is_stale(&self) -> bool {
         let state = self.state.read().await;
 
-        !state.init || now_seconds() - state.updated_seconds >= 24 * 60 * 60
+        !state.init || now_seconds() - state.updated_seconds >= 24 * 60 * 60 || state.cnt == 0
     }
 
     async fn init_cache(&self) -> Result<()> {

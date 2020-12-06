@@ -57,13 +57,35 @@ impl ImageSource {
 
         tracing::info!("Found {:?} images", found_images.len());
 
+        let mut images_loaded = 0;
+
         for capture in found_images {
             let image_url = &capture[3];
-            let image = reqwest::get(image_url).await?.bytes().await?;
 
-            tracing::info!("Adding image to cache");
-            self.cache.add_image(image).await?;
+            match self.load_and_save_image(image_url).await {
+                Err(err) => {
+                    tracing::warn!(
+                        "Failed to load image from {:?}. With error {:?}",
+                        image_url,
+                        err
+                    );
+                    continue;
+                }
+                Ok(_) => images_loaded += 1,
+            };
         }
+
+        tracing::info!("Loaded {:?} images", images_loaded);
+
+        Ok(())
+    }
+
+    async fn load_and_save_image(&self, url: &str) -> Result<()> {
+        tracing::info!("Downloading image");
+        let image = reqwest::get(url).await?.bytes().await?;
+
+        tracing::info!("Adding image to cache");
+        self.cache.add_image(image).await?;
 
         Ok(())
     }

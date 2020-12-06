@@ -16,4 +16,7 @@ pub enum BotError {
 
     #[error("Cache hasn't been initialised")]
     CacheUninitialisedError,
+
+    #[error("Cache is empty")]
+    CacheIsEmpty,
 }
