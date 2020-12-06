@@ -61,15 +61,11 @@ impl ImageCache {
     }
 
     pub async fn add_image(&self, img: Bytes) -> Result<()> {
-        let current_state = self.state.read().await;
         let mut state = self.state.write().await;
 
-        tracing::info!(
-            "Start updating cache. Old generation: {:?}",
-            current_state.gen
-        );
+        tracing::info!("Start updating cache. Old generation: {:?}", state.gen);
 
-        if !current_state.init {
+        if !state.init {
             tracing::warn!("Attempted to update unintialised cache");
             return Err(anyhow!(BotError::CacheUninitialisedError));
         }
