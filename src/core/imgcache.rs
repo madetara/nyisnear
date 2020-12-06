@@ -131,7 +131,8 @@ impl ImageCache {
         while let Some(res) = dir.next().await {
             let entry: DirEntry = res?;
 
-            let img = image::open(entry.path())?;
+            let raw_image = fs::read(entry.path()).await?;
+            let img = image::load_from_memory(raw_image.as_slice())?;
             let hash = get_hash(img);
 
             hashes.insert(hash);
