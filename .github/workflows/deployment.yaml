@@ -61,6 +61,7 @@ jobs:
             docker stop nyisnear
             docker rm nyisnear
             docker run -d --name nyisnear --restart unless-stopped -p $BOT_PORT:3000 \
+              -v "/workload/nyisnear:/data" \
               --env BOT_TOKEN="$BOT_TOKEN" \
               --env BOT_URL="$BOT_URL" \
               --env BOT_PORT="$BOT_PORT" \

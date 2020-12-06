@@ -1,51 +1,65 @@
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Result};
+use bytes::Bytes;
 use lazy_static::lazy_static;
-use rand::Rng;
 use regex::{Captures, Regex};
 
 use crate::core::error::BotError;
-
-pub async fn get_image() -> Result<bytes::Bytes> {
-    let photo_url = get_photo_url().await.context("failed to get photo url")?;
-
-    Ok(reqwest::get(photo_url.as_str())
-        .await
-        .context(format!("failed to send request to {}", photo_url))?
-        .bytes()
-        .await
-        .map_err(|source| BotError::GetImageError { source })?)
-}
+use crate::core::imgcache::ImageCache;
 
 const SEARCH_REQUEST: &str = "https://yandex.ru/images/search?text=%D1%85%D0%B0%D1%82%D0%B0 %D0%BD%D0%B0 %D0%BD%D0%B3 %D0%BC%D0%B5%D0%BC";
 
-async fn get_photo_url() -> Result<String, BotError> {
-    lazy_static! {
-        static ref IMG_REGEX: Regex =
-            Regex::new(r#""w":(\d+),"h":(\d+),"origin":\{[^\}]*(https?://[^"]*)[^<]*"#).unwrap();
+pub struct ImageSource {
+    cache: ImageCache,
+}
+
+impl ImageSource {
+    pub async fn new() -> Result<ImageSource> {
+        let cache = ImageCache::new().await?;
+
+        Ok(ImageSource { cache })
     }
 
-    let search_result = reqwest::get(SEARCH_REQUEST)
-        .await
-        .map_err(|source| BotError::SearchImageError { source })?
-        .text()
-        .await
-        .map_err(|source| BotError::SearchImageError { source })?;
-
-    let found_images = IMG_REGEX
-        .captures_iter(search_result.as_str())
-        .collect::<Vec<Captures>>();
-
-    if found_images.len() <= 0 {
-        return Err(BotError::ImageParseError);
+    pub async fn get_image(&self) -> Result<Bytes> {
+        self.get_from_cache().await
     }
 
-    let mut rnd = rand::thread_rng();
-    let idx = rnd.gen_range(0, found_images.len());
+    async fn get_from_cache(&self) -> Result<Bytes> {
+        if self.cache.is_stale().await {
+            self.update_cache().await?;
+        }
 
-    let image_url: &str = found_images
-        .get(idx)
-        .and_then(|m| Some(&m[3]))
-        .ok_or_else(|| BotError::ImageParseError)?;
+        self.cache.get_random_image().await
+    }
 
-    Ok(image_url.to_string())
+    async fn update_cache(&self) -> Result<()> {
+        lazy_static! {
+            static ref IMG_REGEX: Regex =
+                Regex::new(r#""w":(\d+),"h":(\d+),"origin":\{[^\}]*(https?://[^"]*)[^<]*"#)
+                    .unwrap();
+        }
+
+        let search_result = reqwest::get(SEARCH_REQUEST)
+            .await
+            .map_err(|source| BotError::SearchImageError { source })?
+            .text()
+            .await
+            .map_err(|source| BotError::SearchImageError { source })?;
+
+        let found_images = IMG_REGEX
+            .captures_iter(search_result.as_str())
+            .collect::<Vec<Captures>>();
+
+        if found_images.len() <= 0 {
+            return Err(anyhow!(BotError::ImageParseError));
+        }
+
+        for capture in found_images {
+            let image_url = &capture[3];
+            let image = reqwest::get(image_url).await?.bytes().await?;
+
+            self.cache.add_image(image).await?;
+        }
+
+        Ok(())
+    }
 }
