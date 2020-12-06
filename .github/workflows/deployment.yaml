@@ -6,6 +6,10 @@ on:
       - 'main'
     tags:
       - 'release-*'
+    paths-ignore:
+      - 'README.md'
+      - '.dockerignore'
+      - '.gitignore'
 
 jobs:
   build_and_push:
