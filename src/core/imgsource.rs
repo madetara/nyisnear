@@ -20,7 +20,7 @@ impl ImageSource {
     }
 
     pub async fn get_image(&self) -> Result<Bytes> {
-        self.get_from_cache().await
+        Ok(self.get_from_cache().await?)
     }
 
     async fn get_from_cache(&self) -> Result<Bytes> {
@@ -28,7 +28,7 @@ impl ImageSource {
             self.update_cache().await?;
         }
 
-        self.cache.get_random_image().await
+        Ok(self.cache.get_random_image().await?)
     }
 
     async fn update_cache(&self) -> Result<()> {
@@ -37,6 +37,8 @@ impl ImageSource {
                 Regex::new(r#""w":(\d+),"h":(\d+),"origin":\{[^\}]*(https?://[^"]*)[^<]*"#)
                     .unwrap();
         }
+
+        tracing::info!("Updating cache");
 
         let search_result = reqwest::get(SEARCH_REQUEST)
             .await
@@ -53,10 +55,13 @@ impl ImageSource {
             return Err(anyhow!(BotError::ImageParseError));
         }
 
+        tracing::info!("Found {:?} images", found_images.len());
+
         for capture in found_images {
             let image_url = &capture[3];
             let image = reqwest::get(image_url).await?.bytes().await?;
 
+            tracing::info!("Adding image to cache");
             self.cache.add_image(image).await?;
         }
 

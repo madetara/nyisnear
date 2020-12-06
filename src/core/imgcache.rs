@@ -104,6 +104,7 @@ impl ImageCache {
     }
 
     async fn init_cache(&self) -> Result<()> {
+        tracing::info!("Initialising cache.");
         let mut state = self.state.write().await;
 
         if state.init {
@@ -139,6 +140,8 @@ impl ImageCache {
         state.cnt = cnt;
         state.hashes = hashes;
         state.init = true;
+
+        tracing::info!("Cache initialised: {:?}", state);
 
         Ok(())
     }

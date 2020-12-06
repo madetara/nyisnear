@@ -20,6 +20,6 @@ RUN cargo build --release --bin nyisnear
 FROM rust:1.48.0 as runtime
 WORKDIR /app
 COPY --from=builder /app/target/release/nyisnear /usr/local/bin
-ARG RUST_LOG=debug
+ARG RUST_LOG=info
 ENV RUST_LOG=${RUST_LOG}
 ENTRYPOINT ["/usr/local/bin/nyisnear"]
