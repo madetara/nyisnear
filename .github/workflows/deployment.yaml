@@ -8,6 +8,7 @@ on:
       - 'release-*'
     paths-ignore:
       - 'README.md'
+      - 'LICENSE'
       - '.dockerignore'
       - '.gitignore'
 
