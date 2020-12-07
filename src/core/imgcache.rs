@@ -176,7 +176,7 @@ impl ImageCache {
 fn now_seconds() -> u64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .expect("Tie went backwards")
+        .expect("Time went backwards")
         .as_secs()
 }
 

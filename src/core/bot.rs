@@ -52,6 +52,8 @@ async fn handle_message(source: Arc<ImageSource>, context: Arc<Text>) {
         return;
     }
 
+    tracing::info!("Looking for image");
+
     match source.get_image().await {
         Err(err) => {
             tracing::error!("Failed to get image {:?}", err);
