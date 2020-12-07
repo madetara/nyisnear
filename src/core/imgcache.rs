@@ -1,23 +1,26 @@
 extern crate image;
 extern crate img_hash;
 
-use crate::core::error::BotError;
-
-use async_std::{fs, fs::DirEntry, prelude::*};
-use image::DynamicImage;
-use std::{
-    collections::HashSet,
-    path::{Path, PathBuf},
-    time::{SystemTime, UNIX_EPOCH},
-};
-
 use anyhow::{anyhow, Context, Result};
+use async_std::{fs, fs::DirEntry, prelude::*};
+use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use bytes::Bytes;
+use image::DynamicImage;
 use img_hash::{HashAlg, HasherConfig};
 use rand::Rng;
 use tokio::sync::RwLock;
 
+use std::{
+    collections::HashSet,
+    io::Cursor,
+    path::{Path, PathBuf},
+    time::{SystemTime, UNIX_EPOCH},
+};
+
+use crate::core::error::BotError;
+
 const DIR: &str = "/data";
+const LAST_UPDATE_STORE: &str = "last_update";
 
 #[derive(Debug)]
 struct CacheState {
@@ -88,8 +91,12 @@ impl ImageCache {
         let path = get_path(state.cnt);
         fs::write(path, img).await?;
 
+        let update_time = now_seconds();
+
+        write_last_update_unsafe(update_time).await?;
+
         state.hashes.insert(hash);
-        state.updated_seconds = now_seconds();
+        state.updated_seconds = update_time;
         state.cnt += 1;
         state.gen += 1;
 
@@ -139,6 +146,23 @@ impl ImageCache {
             cnt += 1;
         }
 
+        let last_update = match read_last_update_unsafe().await {
+            Ok(last_update) => last_update,
+            Err(err) => {
+                tracing::warn!("Failed to read update time. Error: {:?}", err);
+                let result = if cnt > 0 {
+                    tracing::info!("Defaulting to current time.");
+                    now_seconds()
+                } else {
+                    tracing::info!("Defaulting to zero.");
+                    0
+                };
+                write_last_update_unsafe(result).await?;
+                result
+            }
+        };
+
+        state.updated_seconds = last_update;
         state.cnt = cnt;
         state.hashes = hashes;
         state.init = true;
@@ -162,6 +186,24 @@ fn get_hash(img: DynamicImage) -> String {
         .to_hasher();
 
     hasher.hash_image(&img).to_base64()
+}
+
+async fn read_last_update_unsafe() -> Result<u64> {
+    let path = Path::new(DIR).join(LAST_UPDATE_STORE);
+    let raw = fs::read(path).await?;
+    let mut rdr = Cursor::new(raw);
+
+    Ok(rdr.read_u64::<BigEndian>()?)
+}
+
+async fn write_last_update_unsafe(last_update: u64) -> Result<()> {
+    let path = Path::new(DIR).join(LAST_UPDATE_STORE);
+    let mut raw = vec![];
+
+    raw.write_u64::<BigEndian>(last_update)?;
+    fs::write(path, raw).await?;
+
+    Ok(())
 }
 
 fn get_path(idx: u32) -> PathBuf {
