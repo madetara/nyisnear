@@ -2,7 +2,13 @@ extern crate image;
 extern crate img_hash;
 
 use anyhow::{anyhow, Context, Result};
-use async_std::{fs, fs::DirEntry, prelude::*};
+use async_std::{
+    fs,
+    fs::DirEntry,
+    path::{Path, PathBuf},
+    prelude::*,
+};
+
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use bytes::Bytes;
 use image::DynamicImage;
@@ -11,9 +17,9 @@ use rand::Rng;
 use tokio::sync::RwLock;
 
 use std::{
+    cmp::Ordering,
     collections::HashSet,
     io::Cursor,
-    path::{Path, PathBuf},
     time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -61,7 +67,7 @@ impl ImageCache {
         }
 
         let idx = rand::thread_rng().gen_range(0, state.cnt);
-        let path = get_path(idx);
+        let path = get_path_to_image(idx);
 
         let data = fs::read(path).await?;
 
@@ -88,7 +94,7 @@ impl ImageCache {
             return Ok(());
         }
 
-        let path = get_path(state.cnt);
+        let path = get_path_to_image(state.cnt);
         fs::write(path, img).await?;
 
         let update_time = now_seconds();
@@ -137,6 +143,11 @@ impl ImageCache {
 
         while let Some(res) = dir.next().await {
             let entry: DirEntry = res?;
+
+            // TODO: temporary solution. move to state and images to separate folders
+            if entry.path().cmp(&get_path_to_update_time()) == Ordering::Equal {
+                continue;
+            }
 
             let raw_image = fs::read(entry.path()).await?;
             let img = image::load_from_memory(raw_image.as_slice())?;
@@ -194,7 +205,7 @@ fn get_hash(img: DynamicImage) -> String {
 }
 
 async fn read_last_update_unsafe() -> Result<u64> {
-    let path = Path::new(DIR).join(LAST_UPDATE_STORE);
+    let path = get_path_to_update_time();
     let raw = fs::read(path).await?;
     let mut rdr = Cursor::new(raw);
 
@@ -202,7 +213,7 @@ async fn read_last_update_unsafe() -> Result<u64> {
 }
 
 async fn write_last_update_unsafe(last_update: u64) -> Result<()> {
-    let path = Path::new(DIR).join(LAST_UPDATE_STORE);
+    let path = get_path_to_update_time();
     let mut raw = vec![];
 
     raw.write_u64::<BigEndian>(last_update)?;
@@ -211,6 +222,10 @@ async fn write_last_update_unsafe(last_update: u64) -> Result<()> {
     Ok(())
 }
 
-fn get_path(idx: u32) -> PathBuf {
+fn get_path_to_image(idx: u32) -> PathBuf {
     Path::new(DIR).join(idx.to_string())
+}
+
+fn get_path_to_update_time() -> PathBuf {
+    Path::new(DIR).join(LAST_UPDATE_STORE)
 }
