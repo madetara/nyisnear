@@ -1,22 +1,34 @@
+use std::time::{SystemTime, UNIX_EPOCH};
+
 use anyhow::{anyhow, Result};
 use bytes::Bytes;
 use lazy_static::lazy_static;
 use regex::{Captures, Regex};
+use tokio::sync::RwLock;
 
 use crate::core::error::BotError;
 use crate::core::imgcache::ImageCache;
 
 const SEARCH_REQUEST: &str = "https://yandex.ru/images/search?text=%D1%85%D0%B0%D1%82%D0%B0 %D0%BD%D0%B0 %D0%BD%D0%B3 %D0%BC%D0%B5%D0%BC";
 
+struct UpdateState {
+    // UNIX timestamp
+    attempt_time: u64,
+}
+
 pub struct ImageSource {
     cache: ImageCache,
+    update_state: RwLock<UpdateState>,
 }
 
 impl ImageSource {
     pub async fn new() -> Result<ImageSource> {
         let cache = ImageCache::new().await?;
 
-        Ok(ImageSource { cache })
+        Ok(ImageSource {
+            cache,
+            update_state: RwLock::new(UpdateState { attempt_time: 0 }),
+        })
     }
 
     pub async fn get_image(&self) -> Result<Bytes> {
@@ -24,8 +36,18 @@ impl ImageSource {
     }
 
     async fn get_from_cache(&self) -> Result<Bytes> {
-        if self.cache.is_stale().await {
-            self.update_cache().await?;
+        let last_update_attempt = {
+            let state = self.update_state.read().await;
+            state.attempt_time
+        };
+
+        if self.cache.is_stale().await && self.can_update().await {
+            let mut state = self.update_state.write().await;
+
+            if last_update_attempt == state.attempt_time {
+                state.attempt_time = unix_now();
+                self.update_cache().await?;
+            }
         }
 
         Ok(self.cache.get_random_image().await?)
@@ -52,6 +74,11 @@ impl ImageSource {
             .collect::<Vec<Captures>>();
 
         if found_images.len() <= 0 {
+            if self.cache.get_items_count().await > 0 {
+                tracing::warn!("Failed to get image URLs. Skipping cache update");
+                return Ok(());
+            }
+
             return Err(anyhow!(BotError::ImageParseError));
         }
 
@@ -89,4 +116,16 @@ impl ImageSource {
 
         Ok(())
     }
+
+    async fn can_update(&self) -> bool {
+        let update_state = self.update_state.read().await;
+        unix_now() - update_state.attempt_time < 60 * 60
+    }
+}
+
+fn unix_now() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("Time went backwards")
+        .as_secs()
 }

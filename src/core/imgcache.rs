@@ -171,6 +171,11 @@ impl ImageCache {
 
         Ok(())
     }
+
+    pub async fn get_items_count(&self) -> u32 {
+        let state = self.state.read().await;
+        state.cnt
+    }
 }
 
 fn now_seconds() -> u64 {
