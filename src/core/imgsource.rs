@@ -119,7 +119,7 @@ impl ImageSource {
 
     async fn can_update(&self) -> bool {
         let update_state = self.update_state.read().await;
-        unix_now() - update_state.attempt_time < 60 * 60
+        unix_now() - update_state.attempt_time > 60 * 60
     }
 }
 
