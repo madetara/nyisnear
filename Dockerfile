@@ -1,4 +1,4 @@
-FROM rust:1.48.0
+FROM rust:1.48.0-alpine
 
 WORKDIR /app
 
@@ -12,4 +12,5 @@ RUN cargo build --release --bin nyisnear
 
 ARG RUST_LOG=info
 ENV RUST_LOG=${RUST_LOG}
+ENV TZ=Asia/Yekaterinburg
 ENTRYPOINT ["/app/target/release/nyisnear"]
