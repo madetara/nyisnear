@@ -1,4 +1,4 @@
-use chrono::{Datelike, Utc};
+use chrono::{Datelike, Local};
 use lazy_static::lazy_static;
 use rand::Rng;
 use regex::Regex;
@@ -16,7 +16,7 @@ pub async fn should_respond(msg: &str) -> bool {
     }
 
     let mut rng = rand::thread_rng();
-    let now = Utc::now();
+    let now = Local::now();
 
     if now.month() != 12 || !NY_REGEX.is_match(msg) {
         tracing::info!("Message didn't pass preconditions");
