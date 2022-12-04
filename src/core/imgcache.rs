@@ -1,5 +1,5 @@
 extern crate image;
-extern crate img_hash;
+extern crate image_hasher;
 
 use anyhow::{anyhow, Context, Result};
 use async_std::{
@@ -11,7 +11,8 @@ use async_std::{
 
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use bytes::Bytes;
-use img_hash::{image::DynamicImage, HashAlg, HasherConfig};
+use image::DynamicImage;
+use image_hasher::{HashAlg, HasherConfig};
 use rand::Rng;
 use tokio::sync::RwLock;
 
@@ -83,8 +84,8 @@ impl ImageCache {
             return Err(anyhow!(BotError::CacheUninitialisedError));
         }
 
-        let loaded_image = img_hash::image::load_from_memory(img.as_ref())
-            .context("Failed to load image from bytes")?;
+        let loaded_image =
+            image::load_from_memory(img.as_ref()).context("Failed to load image from bytes")?;
 
         let hash = get_hash(loaded_image);
 
@@ -149,7 +150,7 @@ impl ImageCache {
             }
 
             let raw_image = fs::read(entry.path()).await?;
-            let img = img_hash::image::load_from_memory(raw_image.as_slice())?;
+            let img = image::load_from_memory(raw_image.as_slice())?;
             let hash = get_hash(img);
 
             hashes.insert(hash);
