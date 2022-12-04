@@ -1293,7 +1293,7 @@ dependencies = [
  "reqwest",
  "tbot",
  "thiserror",
- "tokio 1.22.0",
+ "tokio 0.2.25",
  "tracing",
  "tracing-futures",
  "tracing-subscriber",
@@ -1959,6 +1959,7 @@ dependencies = [
  "mio 0.6.23",
  "pin-project-lite 0.1.12",
  "slab",
+ "tokio-macros",
 ]
 
 [[package]]
@@ -1972,18 +1973,16 @@ dependencies = [
  "libc",
  "memchr",
  "mio 0.8.5",
- "num_cpus",
  "pin-project-lite 0.2.9",
  "socket2 0.4.7",
- "tokio-macros",
  "winapi 0.3.9",
 ]
 
 [[package]]
 name = "tokio-macros"
-version = "1.8.2"
+version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d266c00fde287f55d3f1c3e96c500c362a2b8c695076ec180f27918820bc6df8"
+checksum = "e44da00bfc73a25f814cd8d7e57a68a5c31b74b3152a0a1d1f590c97ed06265a"
 dependencies = [
  "proc-macro2",
  "quote",
