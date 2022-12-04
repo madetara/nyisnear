@@ -1,6 +1,5 @@
-target
-.git
-.gitignore
-.dockerignore
-.github
-Dockerfile
+**
+
+!Cargo.lock
+!Cargo.toml
+!src/*
