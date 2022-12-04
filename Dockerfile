@@ -13,8 +13,8 @@ RUN cargo chef cook --release --target x86_64-unknown-linux-musl --recipe-path r
 COPY . .
 RUN cargo build --release --target x86_64-unknown-linux-musl --bin nyisnear
 
-FROM gcr.io/distroless/static:nonroot
+FROM gcr.io/distroless/cc
 WORKDIR /app
-COPY --from=builder --chown=nonroot:nonrott /app/target/x86_64-unknown-linux-musl/release/nyisnear nyisnear
+COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/nyisnear nyisnear
 ENV RUST_LOG="info"
 ENTRYPOINT [ "/app/nyisnear" ]
