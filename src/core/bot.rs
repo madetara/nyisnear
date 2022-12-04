@@ -1,55 +1,67 @@
 use crate::core::decider;
 use crate::core::imgsource::ImageSource;
 
-use std::{
-    env,
-    net::{IpAddr, Ipv4Addr},
-    sync::Arc,
-};
+use std::{env, sync::Arc};
 
 use anyhow::Result;
-use tbot::{
-    contexts::{methods::ChatMethods, Text},
-    types::input_file::Photo,
-};
+use teloxide::dispatching::update_listeners::webhooks;
+use teloxide::prelude::*;
+use teloxide::types::InputFile;
 use tracing::instrument;
 
 pub async fn run() -> Result<()> {
-    let mut bot = tbot::Bot::from_env("BOT_TOKEN").event_loop();
+    let bot = Bot::from_env();
 
-    let source = Arc::new(ImageSource::new().await?);
+    let bot_url = env::var("BOT_URL")
+        .expect("BOT_URL not set")
+        .parse()
+        .expect("BOT_URL is in incorrect format");
 
-    bot.text(move |context| {
-        let source = Arc::clone(&source);
-        async move { handle_message(source, context).await }
-    });
-
-    start_webhook(bot).await;
-    Ok(())
-}
-
-async fn start_webhook(bot: tbot::EventLoop) {
-    let bot_url = env::var("BOT_URL").expect("BOT_URL not set");
     let bot_port = env::var("BOT_PORT")
         .expect("BOT_PORT not set")
         .parse::<u16>()
         .expect("BOT_PORT is not a number");
 
-    bot.webhook(bot_url.as_str(), bot_port)
-        .ip(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)))
-        .http()
-        .start()
-        .await
-        .unwrap();
+    let listener = webhooks::axum(
+        bot.clone(),
+        webhooks::Options::new(([0, 0, 0, 0], bot_port).into(), bot_url),
+    )
+    .await
+    .expect("Webhook creation failed");
+
+    let source = Arc::new(ImageSource::new().await?);
+
+    teloxide::repl_with_listener(
+        bot,
+        move |bot: Bot, msg: Message| {
+            let source = source.clone();
+            async move {
+                handle_message(bot.clone(), msg, source).await;
+                Ok(())
+            }
+        },
+        listener,
+    )
+    .await;
+
+    Ok(())
 }
 
-#[instrument(skip(source, context), fields(chat_id = %context.chat.id))]
-async fn handle_message(source: Arc<ImageSource>, context: Arc<Text>) {
-    tracing::info!("Message recieved from {}", &context.chat.id);
+#[instrument(skip(bot, msg, source), fields(chat_id = %msg.chat.id))]
+async fn handle_message(bot: Bot, msg: Message, source: Arc<ImageSource>) {
+    tracing::info!("Message recieved from {}", &msg.chat.id);
 
-    if !decider::should_respond(context.text.value.as_str()).await {
-        tracing::info!("Decided to not respond");
-        return;
+    match msg.text() {
+        Some(text) => {
+            if !decider::should_respond(text).await {
+                tracing::info!("Decided to not respond");
+                return;
+            }
+        }
+        None => {
+            tracing::info!("Not a text mesasge, ignoring");
+            return;
+        }
     }
 
     tracing::info!("Looking for image");
@@ -59,15 +71,12 @@ async fn handle_message(source: Arc<ImageSource>, context: Arc<Text>) {
             tracing::error!("Failed to get image {:?}", err);
         }
         Ok(image) => {
-            let call_result = context
-                .send_photo_in_reply(Photo::with_bytes(image.as_ref()))
-                .call()
-                .await;
+            let send_photo_result = bot.send_photo(msg.chat.id, InputFile::memory(image)).await;
 
-            if let Err(err) = call_result {
+            if let Err(err) = send_photo_result {
                 tracing::warn!("Failed to send message: {:?}", err);
             } else {
-                tracing::info!("Message sent");
+                tracing::info!("Photo sent");
             }
         }
     }

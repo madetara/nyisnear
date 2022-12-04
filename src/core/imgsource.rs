@@ -32,7 +32,7 @@ impl ImageSource {
     }
 
     pub async fn get_image(&self) -> Result<Bytes> {
-        Ok(self.get_from_cache().await?)
+        self.get_from_cache().await
     }
 
     async fn get_from_cache(&self) -> Result<Bytes> {
@@ -50,7 +50,7 @@ impl ImageSource {
             }
         }
 
-        Ok(self.cache.get_random_image().await?)
+        self.cache.get_random_image().await
     }
 
     async fn update_cache(&self) -> Result<()> {
@@ -73,7 +73,7 @@ impl ImageSource {
             .captures_iter(search_result.as_str())
             .collect::<Vec<Captures>>();
 
-        if found_images.len() <= 0 {
+        if found_images.is_empty() {
             if self.cache.get_items_count().await > 0 {
                 tracing::warn!("Failed to get image URLs. Skipping cache update");
                 return Ok(());
