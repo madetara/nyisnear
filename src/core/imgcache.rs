@@ -11,8 +11,7 @@ use async_std::{
 
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use bytes::Bytes;
-use image::DynamicImage;
-use img_hash::{HashAlg, HasherConfig};
+use img_hash::{image::DynamicImage, HashAlg, HasherConfig};
 use rand::Rng;
 use tokio::sync::RwLock;
 
@@ -66,7 +65,7 @@ impl ImageCache {
             return Err(anyhow!(BotError::CacheIsEmpty));
         }
 
-        let idx = rand::thread_rng().gen_range(0, state.cnt);
+        let idx = rand::thread_rng().gen_range(0..state.cnt);
         let path = get_path_to_image(idx);
 
         let data = fs::read(path).await?;
@@ -84,8 +83,8 @@ impl ImageCache {
             return Err(anyhow!(BotError::CacheUninitialisedError));
         }
 
-        let loaded_image =
-            image::load_from_memory(img.as_ref()).context("Failed to load image from bytes")?;
+        let loaded_image = img_hash::image::load_from_memory(img.as_ref())
+            .context("Failed to load image from bytes")?;
 
         let hash = get_hash(loaded_image);
 
@@ -150,7 +149,7 @@ impl ImageCache {
             }
 
             let raw_image = fs::read(entry.path()).await?;
-            let img = image::load_from_memory(raw_image.as_slice())?;
+            let img = img_hash::image::load_from_memory(raw_image.as_slice())?;
             let hash = get_hash(img);
 
             hashes.insert(hash);
