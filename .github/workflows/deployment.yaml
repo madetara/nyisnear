@@ -55,10 +55,10 @@ jobs:
           username: root
           envs: BOT_TOKEN, BOT_URL, BOT_PORT, CR_PAT, GITHUB_RUN_NUMBER
           script: |
-            echo $CR_PAT | docker login ghcr.io -u madetara --password-stdin
-            docker stop nyisnear
-            docker rm nyisnear
-            docker run -d --name nyisnear --restart unless-stopped -p $BOT_PORT:3000 \
+            echo $CR_PAT | podman login ghcr.io -u madetara --password-stdin
+            podman stop nyisnear
+            podman rm nyisnear
+            podman run -d --name nyisnear --restart unless-stopped -p $BOT_PORT:3000 \
               -v "/workload/nyisnear:/data" \
               --env BOT_TOKEN="$BOT_TOKEN" \
               --env BOT_URL="$BOT_URL" \
