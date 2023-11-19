@@ -15,7 +15,7 @@ on:
 
 jobs:
   build_and_push:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Set up Docker Buildx
         id: buildx
@@ -39,7 +39,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   deploy_image:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     needs: build_and_push
     env:
       BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
