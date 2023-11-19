@@ -1,10 +1,10 @@
-FROM clux/muslrust:1.65.0-stable as chef
+FROM clux/muslrust:1.74.0-stable as chef
 USER root
 RUN cargo install cargo-chef
 WORKDIR /app
 
 FROM chef as planner
-COPY Cargo.toml Cargo.lock ./
+COPY . .
 RUN cargo chef prepare --recipe-path recipe.json
 
 FROM chef as builder
