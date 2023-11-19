@@ -4,14 +4,14 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - 'main'
+      - "main"
     tags:
-      - 'release-*'
+      - "release-*"
     paths-ignore:
-      - 'README.md'
-      - 'LICENSE'
-      - '.dockerignore'
-      - '.gitignore'
+      - "README.md"
+      - "LICENSE"
+      - ".dockerignore"
+      - ".gitignore"
 
 jobs:
   build_and_push:
@@ -55,11 +55,11 @@ jobs:
           username: root
           envs: BOT_TOKEN, BOT_URL, BOT_PORT, CR_PAT, GITHUB_RUN_NUMBER
           script: |
-            echo $CR_PAT | podman login ghcr.io -u madetara --password-stdin
-            podman stop nyisnear
-            podman rm nyisnear
-            podman run -d --name nyisnear --restart unless-stopped -p $BOT_PORT:3000 \
-              -v "/workload/nyisnear:/data" \
+            echo $CR_PAT | docker login ghcr.io -u madetara --password-stdin
+            docker stop nyisnear
+            docker rm nyisnear
+            docker run -d --name nyisnear --restart unless-stopped -p $BOT_PORT:3000 \
+              -v "/root/workload/nyisnear:/data" \
               --env TELOXIDE_TOKEN="$BOT_TOKEN" \
               --env BOT_URL="$BOT_URL" \
               --env BOT_PORT="$BOT_PORT" \
