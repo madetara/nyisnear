@@ -5,7 +5,7 @@ use regex::Regex;
 use std::cmp;
 use std::sync::atomic::{AtomicU8, Ordering};
 
-pub async fn should_respond(msg: &str) -> bool {
+pub fn should_respond(msg: &str) -> bool {
     lazy_static! {
         static ref NY_REGEX: Regex = Regex::new(
             r"((\b|^|\W)[Нн][Гг](\b|$|\W))|((\b|^|\W)[Хх][Аа]+[Тт][АаУуЫыЕе]+(\b|$|\W))|((\b|^|\W)[Нн]ов(ый|ым|ому) [Гг]од(ом|у)?(\b|$|\W))"
@@ -23,7 +23,10 @@ pub async fn should_respond(msg: &str) -> bool {
         return false;
     }
 
-    let probability = cmp::max((COUNTER.fetch_add(1, Ordering::SeqCst) * 10) % 100, 70) as f64;
+    let probability = f64::from(cmp::max(
+        (COUNTER.fetch_add(1, Ordering::SeqCst) * 10) % 100,
+        70,
+    ));
 
     tracing::info!("Deciding with probability: {:.20}", probability);
 

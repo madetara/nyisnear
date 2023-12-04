@@ -56,11 +56,11 @@ impl ImageSource {
     async fn update_cache(&self) -> Result<()> {
         lazy_static! {
             static ref IMG_REGEX: Regex =
-                Regex::new(r#"img_url=((http|https)%3A%2F%2F([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-]))"#)
+                Regex::new(r"img_url=((http|https)%3A%2F%2F([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-]))")
                     .unwrap();
 
             static ref REPLACE_REGEX: Regex =
-                Regex::new(r#"&(amp|quot)$"#)
+                Regex::new(r"&(amp|quot)$")
                     .unwrap();
         }
 
@@ -104,7 +104,7 @@ impl ImageSource {
                     );
                     continue;
                 }
-                Ok(_) => images_loaded += 1,
+                Ok(()) => images_loaded += 1,
             };
         }
 

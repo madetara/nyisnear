@@ -87,7 +87,7 @@ impl ImageCache {
         let loaded_image =
             image::load_from_memory(img.as_ref()).context("Failed to load image from bytes")?;
 
-        let hash = get_hash(loaded_image);
+        let hash = get_hash(&loaded_image);
 
         if state.hashes.contains(&hash) {
             tracing::info!("Image already cached");
@@ -133,7 +133,7 @@ impl ImageCache {
                     "Error while looking for cache dir: {:?}. Trying to create",
                     err.to_string()
                 );
-                fs::create_dir(DIR).await?
+                fs::create_dir(DIR).await?;
             }
         }
 
@@ -151,7 +151,7 @@ impl ImageCache {
 
             let raw_image = fs::read(entry.path()).await?;
             let img = image::load_from_memory(raw_image.as_slice())?;
-            let hash = get_hash(img);
+            let hash = get_hash(&img);
 
             hashes.insert(hash);
             cnt += 1;
@@ -196,12 +196,12 @@ fn now_seconds() -> u64 {
         .as_secs()
 }
 
-fn get_hash(img: DynamicImage) -> String {
+fn get_hash(img: &DynamicImage) -> String {
     let hasher = HasherConfig::new()
         .hash_alg(HashAlg::DoubleGradient)
         .to_hasher();
 
-    hasher.hash_image(&img).to_base64()
+    hasher.hash_image(img).to_base64()
 }
 
 async fn read_last_update_unsafe() -> Result<u64> {

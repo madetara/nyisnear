@@ -51,17 +51,14 @@ pub async fn run() -> Result<()> {
 async fn handle_message(bot: Bot, msg: Message, source: Arc<ImageSource>) {
     tracing::info!("Message recieved from {}", &msg.chat.id);
 
-    match msg.text() {
-        Some(text) => {
-            if !decider::should_respond(text).await {
-                tracing::info!("Decided to not respond");
-                return;
-            }
-        }
-        None => {
-            tracing::info!("Not a text mesasge, ignoring");
+    if let Some(text) = msg.text() {
+        if !decider::should_respond(text) {
+            tracing::info!("Decided to not respond");
             return;
         }
+    } else {
+        tracing::info!("Not a text mesasge, ignoring");
+        return;
     }
 
     tracing::info!("Looking for image");
