@@ -92,10 +92,10 @@ impl ImageSource {
 
         for capture in found_images {
             tracing::info!("Processing capture {:?}", capture);
-            let image_url = REPLACE_REGEX.replace_all(&capture[3], "").into();
-            let image_url = url_escape::decode(image_url).into();
+            let image_url = REPLACE_REGEX.replace_all(&capture[3], "");
+            let image_url = url_escape::decode(&image_url);
 
-            match self.load_and_save_image(image_url).await {
+            match self.load_and_save_image(&image_url).await {
                 Err(err) => {
                     tracing::warn!(
                         "Failed to load image from {:?}. With error {:?}",
