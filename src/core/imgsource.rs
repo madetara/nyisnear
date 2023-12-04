@@ -56,7 +56,11 @@ impl ImageSource {
     async fn update_cache(&self) -> Result<()> {
         lazy_static! {
             static ref IMG_REGEX: Regex =
-                Regex::new(r#""w":(\d+),"h":(\d+),"origin":\{[^\}]*(https?://[^"]*)[^<]*"#)
+                Regex::new(r#"img_url=((http|https)%3A%2F%2F([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-]))"#)
+                    .unwrap();
+
+            static ref REPLACE_REGEX: Regex =
+                Regex::new(r#"&(amp|quot)$"#)
                     .unwrap();
         }
 
@@ -87,7 +91,9 @@ impl ImageSource {
         let mut images_loaded = 0;
 
         for capture in found_images {
-            let image_url = &capture[3];
+            tracing::info!("Processing capture {:?}", capture);
+            let image_url = REPLACE_REGEX.replace_all(&capture[3], "").into();
+            let image_url = url_escape::decode(image_url).into();
 
             match self.load_and_save_image(image_url).await {
                 Err(err) => {
