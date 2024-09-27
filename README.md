@@ -9,3 +9,5 @@ Telegram bot which sends semi-random (first page of serach) russian meme wheneve
 I had to implement filesystem-based cache in order to reduce amount of requests to search engine and avoid captcha.
 
 Yes, it parses HTML to download memes
+
+# JOPA
