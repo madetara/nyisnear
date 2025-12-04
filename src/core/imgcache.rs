@@ -11,8 +11,7 @@ use async_std::{
 
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use bytes::Bytes;
-use image::DynamicImage;
-use image_hasher::{HashAlg, HasherConfig};
+use image_hasher::{HashAlg, HasherConfig, Image};
 use rand::Rng;
 use tokio::sync::RwLock;
 
@@ -196,7 +195,7 @@ fn now_seconds() -> u64 {
         .as_secs()
 }
 
-fn get_hash(img: &DynamicImage) -> String {
+fn get_hash<T: Image>(img: &T) -> String {
     let hasher = HasherConfig::new()
         .hash_alg(HashAlg::DoubleGradient)
         .to_hasher();
