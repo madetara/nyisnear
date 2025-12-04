@@ -5,7 +5,7 @@ use std::{env, sync::Arc};
 
 use anyhow::Result;
 use teloxide::prelude::*;
-use teloxide::types::InputFile;
+use teloxide::types::{InputFile, ReplyParameters};
 use teloxide::update_listeners::webhooks;
 use tracing::instrument;
 
@@ -68,7 +68,10 @@ async fn handle_message(bot: Bot, msg: Message, source: Arc<ImageSource>) {
             tracing::error!("Failed to get image {:?}", err);
         }
         Ok(image) => {
-            let send_photo_result = bot.send_photo(msg.chat.id, InputFile::memory(image)).await;
+            let send_photo_result = bot
+                .send_photo(msg.chat.id, InputFile::memory(image))
+                .reply_parameters(ReplyParameters::new(msg.id))
+                .await;
 
             if let Err(err) = send_photo_result {
                 tracing::warn!("Failed to send message: {:?}", err);
