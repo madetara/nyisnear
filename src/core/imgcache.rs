@@ -1,7 +1,7 @@
 extern crate image;
 extern crate image_hasher;
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use async_std::{
     fs,
     fs::DirEntry,
@@ -152,11 +152,22 @@ impl ImageCache {
             }
 
             let raw_image = fs::read(entry.path()).await?;
-            let img = image::load_from_memory(raw_image.as_slice())?;
-            let hash = get_hash(&img);
 
-            hashes.insert(hash);
-            cnt += 1;
+            match image::load_from_memory(raw_image.as_slice()) {
+                Ok(img) => {
+                    let hash = get_hash(&img);
+
+                    hashes.insert(hash);
+                    cnt += 1;
+                }
+                Err(err) => {
+                    tracing::warn!(
+                        "Error while loading image '{:?}'. Details: '{:?}'",
+                        entry,
+                        err.to_string()
+                    );
+                }
+            }
         }
 
         let last_update = match read_last_update_unsafe().await {
