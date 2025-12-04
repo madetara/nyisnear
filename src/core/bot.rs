@@ -4,9 +4,9 @@ use crate::core::imgsource::ImageSource;
 use std::{env, sync::Arc};
 
 use anyhow::Result;
-use teloxide::dispatching::update_listeners::webhooks;
 use teloxide::prelude::*;
 use teloxide::types::InputFile;
+use teloxide::update_listeners::webhooks;
 use tracing::instrument;
 
 pub async fn run() -> Result<()> {
@@ -31,7 +31,7 @@ pub async fn run() -> Result<()> {
 
     let source = Arc::new(ImageSource::new().await?);
 
-    teloxide::repl_with_listener(
+    Box::pin(teloxide::repl_with_listener(
         bot,
         move |bot: Bot, msg: Message| {
             let source = source.clone();
@@ -41,7 +41,7 @@ pub async fn run() -> Result<()> {
             }
         },
         listener,
-    )
+    ))
     .await;
 
     Ok(())

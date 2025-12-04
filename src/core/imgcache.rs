@@ -65,7 +65,7 @@ impl ImageCache {
             return Err(anyhow!(BotError::CacheIsEmpty));
         }
 
-        let idx = rand::thread_rng().gen_range(0..state.cnt);
+        let idx = rand::rng().random_range(0..state.cnt);
         let path = get_path_to_image(idx);
 
         let data = fs::read(path).await?;

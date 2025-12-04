@@ -15,7 +15,7 @@ pub fn should_respond(msg: &str) -> bool {
 
     static COUNTER: LazyLock<AtomicU8> = LazyLock::new(|| AtomicU8::new(0));
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let now = Local::now();
 
     if now.month() != 12 || !NY_REGEX.is_match(msg) {
@@ -30,5 +30,5 @@ pub fn should_respond(msg: &str) -> bool {
 
     tracing::info!("Deciding with probability: {:.20}", probability);
 
-    rng.gen_bool(probability / 100.0)
+    rng.random_bool(probability / 100.0)
 }
