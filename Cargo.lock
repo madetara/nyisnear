@@ -1273,7 +1273,6 @@ dependencies = [
  "chrono",
  "image",
  "image_hasher",
- "lazy_static",
  "rand",
  "regex",
  "reqwest",

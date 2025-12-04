@@ -1,8 +1,8 @@
+use std::sync::LazyLock;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::{anyhow, Result};
 use bytes::Bytes;
-use lazy_static::lazy_static;
 use regex::{Captures, Regex};
 use tokio::sync::RwLock;
 
@@ -54,15 +54,13 @@ impl ImageSource {
     }
 
     async fn update_cache(&self) -> Result<()> {
-        lazy_static! {
-            static ref IMG_REGEX: Regex =
-                Regex::new(r"img_url=((http|https)%3A%2F%2F([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-]))")
-                    .unwrap();
+        static IMG_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+            Regex::new(r"img_url=((http|https)%3A%2F%2F([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-]))")
+                    .unwrap()
+        });
 
-            static ref REPLACE_REGEX: Regex =
-                Regex::new(r"&(amp|quot)$")
-                    .unwrap();
-        }
+        static REPLACE_REGEX: LazyLock<Regex> =
+            LazyLock::new(|| Regex::new(r"&(amp|quot)$").unwrap());
 
         tracing::info!("Updating cache");
 
@@ -102,7 +100,6 @@ impl ImageSource {
                         image_url,
                         err
                     );
-                    continue;
                 }
                 Ok(()) => images_loaded += 1,
             };

@@ -1,19 +1,19 @@
 use chrono::{Datelike, Local};
-use lazy_static::lazy_static;
 use rand::Rng;
 use regex::Regex;
 use std::cmp;
 use std::sync::atomic::{AtomicU8, Ordering};
+use std::sync::LazyLock;
 
 pub fn should_respond(msg: &str) -> bool {
-    lazy_static! {
-        static ref NY_REGEX: Regex = Regex::new(
+    static NY_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(
             r"((\b|^|\W)[Нн][Гг](\b|$|\W))|((\b|^|\W)[Хх][Аа]+[Тт][АаУуЫыЕе]+(\b|$|\W))|((\b|^|\W)[Нн]ов(ый|ым|ому) [Гг]од(ом|у)?(\b|$|\W))"
         )
-        .unwrap();
+        .unwrap()
+    });
 
-        static ref COUNTER: AtomicU8 = AtomicU8::new(0);
-    }
+    static COUNTER: LazyLock<AtomicU8> = LazyLock::new(|| AtomicU8::new(0));
 
     let mut rng = rand::thread_rng();
     let now = Local::now();
