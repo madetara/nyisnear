@@ -32,7 +32,7 @@ struct CacheState {
     // seconds since UNIX Epoch
     updated_seconds: u64,
     cnt: u32,
-    gen: u32,
+    generation: u32,
     init: bool,
     hashes: HashSet<String>,
 }
@@ -47,7 +47,7 @@ impl ImageCache {
             state: RwLock::new(CacheState {
                 updated_seconds: 0,
                 cnt: 0,
-                gen: 0,
+                generation: 0,
                 init: false,
                 hashes: HashSet::new(),
             }),
@@ -76,7 +76,10 @@ impl ImageCache {
     pub async fn add_image(&self, img: Bytes) -> Result<()> {
         let mut state = self.state.write().await;
 
-        tracing::info!("Start updating cache. Old generation: {:?}", state.gen);
+        tracing::info!(
+            "Start updating cache. Old generation: {:?}",
+            state.generation
+        );
 
         if !state.init {
             tracing::warn!("Attempted to update unintialised cache");
@@ -103,9 +106,9 @@ impl ImageCache {
         state.hashes.insert(hash);
         state.updated_seconds = update_time;
         state.cnt += 1;
-        state.gen += 1;
+        state.generation += 1;
 
-        tracing::info!("Cache updated. New generation: {:?}", state.gen);
+        tracing::info!("Cache updated. New generation: {:?}", state.generation);
 
         Ok(())
     }

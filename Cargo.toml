@@ -1,6 +1,6 @@
 [package]
 authors = ["madetara <x@madetara.dev>"]
-edition = "2021"
+edition = "2024"
 name = "nyisnear"
 publish = false
 readme = "README.md"

@@ -1,7 +1,7 @@
 use std::sync::LazyLock;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use bytes::Bytes;
 use regex::{Captures, Regex};
 use tokio::sync::RwLock;
@@ -102,7 +102,7 @@ impl ImageSource {
                     );
                 }
                 Ok(()) => images_loaded += 1,
-            };
+            }
         }
 
         tracing::info!("Loaded {:?} images", images_loaded);
